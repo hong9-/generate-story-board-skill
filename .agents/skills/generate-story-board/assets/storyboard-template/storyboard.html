@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conceptual UX Storyboard</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      --bg: #07111f;
+      --panel: #0f1d2e;
+      --panel-2: #16263a;
+      --text: #e7eef8;
+      --muted: #9fb0c6;
+      --accent: #72a7ff;
+      --success: #4ade80;
+      --recovery: #fb7185;
+      --border: #2d4059;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    button, select, input { font: inherit; }
+
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+      min-height: 640px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      z-index: 20;
+    }
+
+    .toolbar h1 { margin: 0 auto 0 0; font-size: 16px; }
+    .toolbar label, .toolbar button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 7px 10px;
+      color: var(--text);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+    }
+    .toolbar button { cursor: pointer; }
+    .target-controls {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .target-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+    }
+    .target-control label {
+      min-height: 26px;
+      padding: 3px 6px;
+      border: 0;
+    }
+    .target-control button { min-height: 26px; padding: 3px 7px; }
+
+    .notice {
+      flex-basis: 100%;
+      padding: 8px 10px;
+      color: #fde68a;
+      background: #422006;
+      border: 1px solid #92400e;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .viewport {
+      overflow: auto;
+      position: relative;
+      touch-action: pan-x pan-y;
+      cursor: grab;
+    }
+    .viewport.is-panning { cursor: grabbing; user-select: none; }
+    .scaled-layout { position: relative; transform-origin: 0 0; }
+    .board {
+      position: relative;
+      width: 1440px;
+      height: 820px;
+      background:
+        linear-gradient(rgba(114, 167, 255, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(114, 167, 255, .045) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .layer { position: absolute; inset: 0; }
+    .arrow-layer { z-index: 1; overflow: visible; pointer-events: none; }
+    .label-layer { z-index: 2; pointer-events: none; }
+    .screen-layer { z-index: 3; }
+    .branch-layer { z-index: 4; pointer-events: none; }
+    .target-layer { z-index: 5; pointer-events: none; }
+
+    .screen {
+      position: absolute;
+      background: #0b1625;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 16px 42px rgba(0, 0, 0, .34);
+      overflow: hidden;
+    }
+    .screen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .screen-id {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      padding: 5px 8px;
+      color: white;
+      background: rgba(4, 10, 20, .82);
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .branch {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 112px;
+      height: 112px;
+      padding: 18px;
+      text-align: center;
+      color: #07111f;
+      background: #fbbf24;
+      transform: rotate(45deg);
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .branch > span { transform: rotate(-45deg); }
+
+    .edge-label {
+      position: absolute;
+      width: 138px;
+      min-height: 42px;
+      display: grid;
+      place-items: center;
+      padding: 7px 9px;
+      text-align: center;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .target {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: #dc2626;
+      border: 3px solid white;
+      border-radius: 999px;
+      box-shadow: 0 0 0 5px rgba(220, 38, 38, .28);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    [hidden] { display: none !important; }
+    .route-recovery { --route-color: var(--recovery); }
+    .route-success { --route-color: var(--success); }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="toolbar">
+      <h1>Sign-in flow storyboard</h1>
+      <label><input id="toggle-targets" type="checkbox" checked> Action targets</label>
+      <div class="target-controls" id="target-controls" aria-label="Individual action targets"></div>
+      <label><input id="toggle-labels" type="checkbox" checked> Edge labels</label>
+      <label>Route
+        <select id="route-filter">
+          <option value="all">All</option>
+          <option value="success">Success</option>
+          <option value="recovery">Recovery</option>
+        </select>
+      </label>
+      <button type="button" data-zoom="-0.1" aria-label="Zoom out">−</button>
+      <button type="button" data-zoom="0.1" aria-label="Zoom in">+</button>
+      <button type="button" id="zoom-reset">100%</button>
+      <button type="button" id="zoom-fit">Fit</button>
+      <div class="notice" id="concept-notice">Concept mockup — not production design</div>
+    </header>
+
+    <section class="viewport" id="viewport" aria-label="Storyboard canvas">
+      <div class="scaled-layout" id="scaled-layout">
+        <div class="board" id="board">
+          <svg class="layer arrow-layer" id="arrow-layer" aria-hidden="true"></svg>
+          <div class="layer label-layer" id="label-layer"></div>
+          <div class="layer screen-layer" id="screen-layer"></div>
+          <div class="layer branch-layer" id="branch-layer"></div>
+          <div class="layer target-layer" id="target-layer"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORYBOARD_DATA = {
+      "title": "Sign-in flow storyboard",
+      "width": 1440,
+      "height": 820,
+      "conceptNotice": "Concept mockup — not production design",
+      "screens": [
+        {
+          "id": "S001",
+          "name": "Sign in",
+          "sourceStatus": "conceptual",
+          "image": "screens/S001.svg",
+          "x": 80,
+          "y": 150,
+          "width": 260,
+          "height": 563
+        },
+        {
+          "id": "S002",
+          "name": "Dashboard",
+          "sourceStatus": "conceptual",
+          "image": "screens/S002.svg",
+          "x": 1050,
+          "y": 150,
+          "width": 260,
+          "height": 563
+        }
+      ],
+      "branches": [
+        {
+          "id": "B001",
+          "label": "Credentials valid?",
+          "x": 650,
+          "y": 350
+        }
+      ],
+      "targets": [
+        {
+          "id": "T001",
+          "screenId": "S001",
+          "label": "Sign in",
+          "x": 265,
+          "y": 438
+        }
+      ],
+      "edges": [
+        {
+          "id": "E001",
+          "source": "S001",
+          "target": "B001",
+          "targetId": "T001",
+          "route": "success",
+          "label": "action T001 / submit",
+          "path": "M 340 430 H 628",
+          "labelX": 420,
+          "labelY": 378
+        },
+        {
+          "id": "E002",
+          "source": "B001",
+          "target": "S002",
+          "route": "success",
+          "label": "yes / crossfade",
+          "path": "M 762 430 H 1050",
+          "labelX": 830,
+          "labelY": 378
+        },
+        {
+          "id": "E003",
+          "source": "B001",
+          "target": "S001",
+          "route": "recovery",
+          "label": "no / inline error",
+          "path": "M 706 486 V 746 H 210 V 713",
+          "labelX": 460,
+          "labelY": 714
+        }
+      ]
+    };
+
+    const ns = "http://www.w3.org/2000/svg";
+    const board = document.querySelector("#board");
+    const viewport = document.querySelector("#viewport");
+    const scaledLayout = document.querySelector("#scaled-layout");
+    const screenLayer = document.querySelector("#screen-layer");
+    const branchLayer = document.querySelector("#branch-layer");
+    const targetLayer = document.querySelector("#target-layer");
+    const targetControls = document.querySelector("#target-controls");
+    const labelLayer = document.querySelector("#label-layer");
+    const arrowLayer = document.querySelector("#arrow-layer");
+    let scale = 1;
+    const targetNodes = new Map();
+    const targetInputs = new Map();
+
+    const place = (element, item) => {
+      element.style.left = `${item.x}px`;
+      element.style.top = `${item.y}px`;
+      if (item.width) element.style.width = `${item.width}px`;
+      if (item.height) element.style.height = `${item.height}px`;
+    };
+
+    document.title = STORYBOARD_DATA.title;
+    document.querySelector("h1").textContent = STORYBOARD_DATA.title;
+    document.querySelector("#concept-notice").textContent = STORYBOARD_DATA.conceptNotice;
+    board.style.width = `${STORYBOARD_DATA.width}px`;
+    board.style.height = `${STORYBOARD_DATA.height}px`;
+    arrowLayer.setAttribute("viewBox", `0 0 ${STORYBOARD_DATA.width} ${STORYBOARD_DATA.height}`);
+
+    for (const item of STORYBOARD_DATA.screens) {
+      const node = document.createElement("figure");
+      node.className = "screen";
+      node.dataset.screenId = item.id;
+      node.dataset.sourceStatus = item.sourceStatus;
+      node.setAttribute("aria-label", `${item.id} ${item.name}`);
+      place(node, item);
+
+      const image = document.createElement("img");
+      image.src = item.image;
+      image.alt = `${item.name} — ${item.sourceStatus} storyboard screen`;
+      const badge = document.createElement("figcaption");
+      badge.className = "screen-id";
+      badge.textContent = `${item.id} · ${item.name}`;
+      node.append(image, badge);
+      screenLayer.append(node);
+    }
+
+    for (const item of STORYBOARD_DATA.branches) {
+      const node = document.createElement("div");
+      node.className = "branch";
+      node.dataset.branchId = item.id;
+      node.innerHTML = `<span>${item.id}<br>${item.label}</span>`;
+      place(node, item);
+      branchLayer.append(node);
+    }
+
+    for (const item of STORYBOARD_DATA.targets) {
+      const node = document.createElement("div");
+      node.className = "target";
+      node.dataset.targetId = item.id;
+      node.title = `${item.id} ${item.label}`;
+      node.textContent = item.id.slice(1);
+      place(node, item);
+      targetLayer.append(node);
+      targetNodes.set(item.id, node);
+
+      const control = document.createElement("div");
+      control.className = "target-control";
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = true;
+      input.dataset.targetToggle = item.id;
+      label.append(input, document.createTextNode(` ${item.id}`));
+      const focus = document.createElement("button");
+      focus.type = "button";
+      focus.textContent = "Focus";
+      focus.dataset.targetFocus = item.id;
+      focus.setAttribute("aria-label", `Focus ${item.id} ${item.label}`);
+      control.append(label, focus);
+      targetControls.append(control);
+      targetInputs.set(item.id, input);
+
+      input.addEventListener("change", () => {
+        node.hidden = !input.checked;
+        syncTargetToggle();
+      });
+      focus.addEventListener("click", () => {
+        viewport.scrollTo({
+          left: Math.max(0, item.x * scale - viewport.clientWidth / 2),
+          top: Math.max(0, item.y * scale - viewport.clientHeight / 2),
+          behavior: "smooth"
+        });
+      });
+    }
+
+    for (const item of STORYBOARD_DATA.edges) {
+      const group = document.createElementNS(ns, "g");
+      group.dataset.edgeId = item.id;
+      group.dataset.route = item.route;
+      const path = document.createElementNS(ns, "path");
+      path.setAttribute("d", item.path);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", item.route === "recovery" ? "#fb7185" : "#4ade80");
+      path.setAttribute("stroke-width", "3");
+      path.setAttribute("marker-end", "url(#arrowhead)");
+      group.append(path);
+      arrowLayer.append(group);
+
+      const label = document.createElement("div");
+      label.className = "edge-label";
+      label.dataset.edgeId = item.id;
+      label.dataset.route = item.route;
+      label.textContent = item.label;
+      place(label, { x: item.labelX, y: item.labelY });
+      labelLayer.append(label);
+    }
+
+    const defs = document.createElementNS(ns, "defs");
+    defs.innerHTML = `<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="context-stroke"/></marker>`;
+    arrowLayer.prepend(defs);
+
+    const applyScale = (nextScale) => {
+      scale = Math.min(1.8, Math.max(.35, nextScale));
+      board.style.transform = `scale(${scale})`;
+      board.style.transformOrigin = "0 0";
+      scaledLayout.style.width = `${STORYBOARD_DATA.width * scale}px`;
+      scaledLayout.style.height = `${STORYBOARD_DATA.height * scale}px`;
+      document.querySelector("#zoom-reset").textContent = `${Math.round(scale * 100)}%`;
+    };
+
+    document.querySelectorAll("[data-zoom]").forEach((button) => {
+      button.addEventListener("click", () => applyScale(scale + Number(button.dataset.zoom)));
+    });
+    document.querySelector("#zoom-reset").addEventListener("click", () => applyScale(1));
+    document.querySelector("#zoom-fit").addEventListener("click", () => {
+      applyScale(Math.min(viewport.clientWidth / STORYBOARD_DATA.width, viewport.clientHeight / STORYBOARD_DATA.height));
+    });
+    const globalTargetToggle = document.querySelector("#toggle-targets");
+    const syncTargetToggle = () => {
+      const checkedCount = [...targetInputs.values()].filter((input) => input.checked).length;
+      globalTargetToggle.checked = checkedCount === targetInputs.size;
+      globalTargetToggle.indeterminate = checkedCount > 0 && checkedCount < targetInputs.size;
+    };
+    globalTargetToggle.addEventListener("change", (event) => {
+      for (const [id, input] of targetInputs) {
+        input.checked = event.target.checked;
+        targetNodes.get(id).hidden = !event.target.checked;
+      }
+      globalTargetToggle.indeterminate = false;
+    });
+    document.querySelector("#toggle-labels").addEventListener("change", (event) => {
+      labelLayer.hidden = !event.target.checked;
+    });
+    document.querySelector("#route-filter").addEventListener("change", (event) => {
+      const selected = event.target.value;
+      document.querySelectorAll("[data-route]").forEach((node) => {
+        node.toggleAttribute("hidden", selected !== "all" && node.dataset.route !== selected);
+      });
+    });
+
+    let drag = null;
+    viewport.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button, input, select, a")) return;
+      drag = { x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
+      viewport.classList.add("is-panning");
+      viewport.setPointerCapture(event.pointerId);
+    });
+    viewport.addEventListener("pointermove", (event) => {
+      if (!drag) return;
+      viewport.scrollLeft = drag.left - (event.clientX - drag.x);
+      viewport.scrollTop = drag.top - (event.clientY - drag.y);
+    });
+    const stopPan = () => {
+      drag = null;
+      viewport.classList.remove("is-panning");
+    };
+    viewport.addEventListener("pointerup", stopPan);
+    viewport.addEventListener("pointercancel", stopPan);
+    applyScale(1);
+  </script>
+</body>
+</html>

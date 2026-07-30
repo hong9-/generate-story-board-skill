@@ -1,0 +1,20 @@
+{
+  "name": "generate-story-board-skill",
+  "version": "0.1.0",
+  "description": "Repo-scoped Codex skill for creating conceptual UX storyboards from mock screens and deterministic flow metadata.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    ".agents/skills/generate-story-board",
+    "README.md",
+    "tests"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "validate:template": "node .agents/skills/generate-story-board/scripts/validate-storyboard.mjs .agents/skills/generate-story-board/assets/storyboard-template/storyboard.html"
+  }
+}

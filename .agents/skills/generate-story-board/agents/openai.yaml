@@ -1,0 +1,4 @@
+interface:
+  display_name: "UX Storyboard Generator"
+  short_description: "Build conceptual UI storyboards from screens and flows"
+  default_prompt: "Use $generate-story-board to create a conceptual UX storyboard with mock screens, Mermaid flows, and action targets."
